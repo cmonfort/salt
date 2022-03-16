@@ -99,6 +99,11 @@ class SaltCacheLoader(BaseLoader):
         if self._file_client is None:
             attr = "_cached_pillar_client" if self.pillar_rend else "_cached_client"
             cached_client = getattr(self, attr, None)
+            if cached_client is not None:
+                if cached_client.opts['cachedir'] != self.opts['cachedir']:
+                    self.shutdown()
+                    cached_client = None
+ 
             if cached_client is None:
                 cached_client = salt.fileclient.get_file_client(
                     self.opts, self.pillar_rend
