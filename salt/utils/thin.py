@@ -31,10 +31,15 @@ import yaml
 
 # This is needed until we drop support for python 3.6
 has_immutables = False
+has_typing_extensions = False
 try:
     import immutables
 
     has_immutables = True
+ 
+    if sys.version_info < (3,8):
+         import typing_extensions
+         has_typing_extensions = True
 except ImportError:
     pass
 
@@ -435,6 +440,8 @@ def get_tops(extra_mods="", so_mods=""):
     mods.append(contextvars)
     if has_immutables:
         mods.append(immutables)
+    if has_typing_extensions:
+        mods.append(typing_extensions)
     for mod in mods:
         if mod:
             log.debug('Adding module to the tops: "%s"', mod.__name__)
