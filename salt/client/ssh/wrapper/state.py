@@ -5,6 +5,7 @@ Create ssh executor system
 import logging
 import os
 import time
+from copy import deepcopy
 
 import salt.client.ssh.shell
 import salt.client.ssh.state
@@ -661,15 +662,20 @@ def highstate(test=None, **kwargs):
     st_kwargs = __salt__.kwargs
     __opts__["grains"] = __grains__.value()
     opts = salt.utils.state.get_sls_opts(__opts__, **kwargs)
+    highstate_opts = deepcopy(opts)
+    highstate_opts["extra_filerefs"] = opts["__master_opts__"].get("extra_filerefs", "")
+    highstate_opts["cachedir"] = opts["__master_opts__"].get("cachedir", "")
     with salt.client.ssh.state.SSHHighState(
-        opts, __pillar__.value(), __salt__.value(), __context__["fileclient"]
+        highstate_opts, __pillar__.value(), __salt__.value(), __context__["fileclient"]
     ) as st_:
         st_.push_active()
         chunks = st_.compile_low_chunks()
         file_refs = salt.client.ssh.state.lowstate_file_refs(
             chunks,
             _merge_extra_filerefs(
-                kwargs.get("extra_filerefs", ""), opts.get("extra_filerefs", "")
+                kwargs.get("extra_filerefs", ""),
+                opts.get("extra_filerefs", ""),
+                opts.get("__master_opts__", {}).get("extra_filerefs", "")
             ),
         )
         # Check for errors
